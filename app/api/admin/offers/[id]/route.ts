@@ -27,7 +27,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   try { body = await request.json(); } catch { return jsonError("INVALID_JSON", "请求体必须是有效 JSON", 400); }
   const values = bodyRecord(body);
   if (!values) return jsonError("VALIDATION_ERROR", "请求内容不符合要求", 400);
-  const status = statusSchema.safeParse(values.status ?? row.status);
+  const status = statusSchema.safeParse(values.status ?? (row.status === "hidden" ? "hidden" : "published"));
   const parsed = submissionSchema.safeParse({ ...values, turnstileToken: "admin" });
   if (!status.success) return validationError(status.error);
   if (!parsed.success) return validationError(parsed.error);
