@@ -82,10 +82,13 @@ export default function Home() {
   const [reload, setReload] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
-    fetchOffers(kind, pages[kind], controller.signal)
-      .then((payload) => {
-        setResults((current) => ({ ...current, [kind]: payload.items || [] }));
-        setPagination((current) => ({ ...current, [kind]: payload.pagination || null }));
+    Promise.all([
+      fetchOffers("active", pages.active, controller.signal),
+      fetchOffers("long-term", pages["long-term"], controller.signal),
+    ])
+      .then(([active, longTerm]) => {
+        setResults({ active: active.items || [], "long-term": longTerm.items || [] });
+        setPagination({ active: active.pagination || null, "long-term": longTerm.pagination || null });
       })
       .catch((cause: unknown) => {
         if (cause instanceof DOMException && cause.name === "AbortError") return;
@@ -93,13 +96,12 @@ export default function Home() {
       })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [kind, pages, reload]);
+  }, [pages, reload]);
   const currentOffers = results[kind];
   const currentPagination = pagination[kind];
   const currentTab = tabs.find((tab) => tab.kind === kind) || tabs[0];
   const selectKind = (nextKind: Kind) => {
     if (nextKind === kind) return;
-    setLoading(true);
     setError(null);
     setKind(nextKind);
   };
@@ -112,9 +114,9 @@ export default function Home() {
     <main className="site-shell" id="main-content">
       <a className="skip-link" href="#catalog">跳到活动列表</a>
       <header className="site-header"><Link className="brand" href="/" aria-label="Free LLM Hub 首页"><span className="brand__dot" />Free LLM Hub</Link><nav><Link className="header-link" href="/submit">提交线索 <span aria-hidden="true">＋</span></Link></nav></header>
-      <section className="hero" aria-labelledby="page-title"><div className="hero__copy"><p className="kicker">FREE LLM OFFERS, CURATED</p><h1 id="page-title">免费 LLM<br /><em>活动与额度</em></h1><p className="hero__lede">汇总各家模型服务的免费额度、代金券和长期计划。信息清楚，入口直接，按需领取。</p></div><div className="hero__aside"><span className="hero__count">{currentPagination?.total ?? "—"}</span><span>条线索<br />当前分类</span></div></section>
+      <section className="hero" aria-labelledby="page-title"><div className="hero__copy"><p className="kicker">FREE LLM OFFERS, CURATED</p><h1 id="page-title">免费 LLM<br /><em>活动与额度</em></h1><p className="hero__lede">汇总各家模型服务的免费额度、代金券和长期计划。信息清楚，入口直接，按需领取。</p></div></section>
       <section className="catalog" id="catalog" aria-label="免费活动目录">
-        <div className="catalog__header"><div className="tabs" aria-label="活动类型">{tabs.map((tab) => <button key={tab.kind} className={`tab ${kind === tab.kind ? "is-active" : ""}`} aria-controls="offer-panel" aria-pressed={kind === tab.kind} onClick={() => selectKind(tab.kind)}><span>{tab.eyebrow}</span>{tab.label}</button>)}</div><Link className="submit-link" href="/submit">分享一条线索 <span aria-hidden="true">↗</span></Link></div>
+        <div className="catalog__header"><div className="tabs" aria-label="活动类型">{tabs.map((tab) => <button key={tab.kind} className={`tab ${kind === tab.kind ? "is-active" : ""}`} aria-controls="offer-panel" aria-pressed={kind === tab.kind} onClick={() => selectKind(tab.kind)}><span className="tab__copy"><span className="tab__eyebrow">{tab.eyebrow}</span>{tab.label}</span><span className="tab__count" aria-label={`${pagination[tab.kind]?.total ?? "加载中"} 条线索`}>{pagination[tab.kind]?.total ?? "—"}</span></button>)}</div><Link className="submit-link" href="/submit">分享一条线索 <span aria-hidden="true">↗</span></Link></div>
         <div className="catalog__intro"><div><p className="section-kicker">{currentTab.eyebrow}</p><h2>{currentTab.label}</h2></div><p>按创建时间从新到旧排列</p></div>
         <div id="offer-panel">{loading ? <div className="state-panel" role="status"><span className="spinner" />正在同步最新活动…</div> : error ? <div className="state-panel state-panel--error" role="alert"><p>{error}</p><button className="button button--secondary" onClick={() => { setLoading(true); setError(null); setReload((value) => value + 1); }}>重新加载</button></div> : currentOffers.length === 0 ? <div className="state-panel"><strong>这里还没有活动</strong><p>成为第一个分享免费额度的人吧。</p><Link className="button button--primary" href="/submit">提交线索</Link></div> : <div className="offer-grid">{currentOffers.map((offer) => <OfferCard key={offer.id} offer={offer} />)}</div>}</div>
         {!loading && !error && currentPagination && currentPagination.totalPages > 1 && <div className="pagination" aria-label="分页"><button className="page-button" disabled={!currentPagination.hasPreviousPage} onClick={() => changePage(Math.max(1, pages[kind] - 1))} aria-label="上一页">←</button><span>第 {currentPagination.page} / {currentPagination.totalPages} 页</span><button className="page-button" disabled={!currentPagination.hasNextPage} onClick={() => changePage(pages[kind] + 1)} aria-label="下一页">→</button></div>}

@@ -12,6 +12,8 @@ pnpm dev
 
 在 `.env.local` 中配置 Cloudflare Turnstile site key 和 secret key。SQLite 默认创建在 `data/offers.db`，也可以通过 `SQLITE_PATH` 指向其他持久化路径。
 
+后台位于 `/admin`，使用 HTTP Basic Auth 保护。请在 `.env.local` 中设置 `ADMIN_USERNAME` 和 `ADMIN_PASSWORD`，并仅通过 HTTPS 暴露后台。
+
 打开 [http://localhost:3000](http://localhost:3000)，提交页位于 `/submit`。
 
 ## API
