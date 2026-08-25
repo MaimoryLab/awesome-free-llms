@@ -46,6 +46,23 @@ test("token plans and other benefits use their own fields", () => {
   assert.equal(invalidTokenPlan.success, false);
 });
 
+test("measured benefit units are normalized and restricted", () => {
+  const token = submissionSchema.safeParse(baseSubmission);
+  const dollars = submissionSchema.safeParse({
+    ...baseSubmission,
+    benefits: [{ type: "voucher", amount: 5, unit: "USD" }],
+  });
+  const invalidVoucher = submissionSchema.safeParse({
+    ...baseSubmission,
+    benefits: [{ type: "voucher", amount: 5, unit: "EUR" }],
+  });
+  assert.equal(token.success, true);
+  const tokenBenefit = token.success ? token.data.benefits[0] : undefined;
+  assert.equal(tokenBenefit?.type === "token" && tokenBenefit.unit, "million-token");
+  assert.equal(dollars.success, true);
+  assert.equal(invalidVoucher.success, false);
+});
+
 test("dated offers require a valid start and end", () => {
   const missingDates = submissionSchema.safeParse({
     ...baseSubmission,

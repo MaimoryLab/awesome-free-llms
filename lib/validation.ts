@@ -1,12 +1,22 @@
 import { z } from "zod";
 
 const MAX_BODY_TEXT = 2000;
+const benefitAmountSchema = z.number().finite().positive();
 
 export const benefitSchema = z.discriminatedUnion("type", [
   z.object({
-    type: z.enum(["token", "voucher", "points"]),
-    amount: z.number().finite().positive(),
-    unit: z.string().trim().max(32).optional(),
+    type: z.literal("token"),
+    amount: benefitAmountSchema,
+    unit: z.literal("million-token").default("million-token"),
+  }),
+  z.object({
+    type: z.literal("voucher"),
+    amount: benefitAmountSchema,
+    unit: z.enum(["USD", "CNY"]).optional(),
+  }),
+  z.object({
+    type: z.literal("points"),
+    amount: benefitAmountSchema,
   }),
   z.object({
     type: z.literal("token-plan"),
