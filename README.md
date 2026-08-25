@@ -22,3 +22,9 @@ pnpm dev
 - `POST /api/submissions`：验证 Turnstile 并创建活动。
 
 所有列表响应包含 `items` 和 `pagination`，`pageSize` 最大为 50。生产环境需要为 SQLite 配置持久化磁盘。
+
+## EdgeOne Makers 部署
+
+项目的 `build` 脚本使用 `next build --webpack`。这是为了让 `better-sqlite3` 以标准 Node 外部模块方式保留，避免 Next 16 默认 Turbopack 产出带哈希的原生模块名，导致 EdgeOne SSR 运行时无法加载。
+
+部署时确保 EdgeOne 使用仓库中的安装和构建命令，并在 Node 运行时允许安装 `better-sqlite3` 的原生依赖。SQLite 数据库必须挂载到持久化磁盘；如果 EdgeOne 运行实例不提供持久化本地文件，提交数据不会适合作为生产数据存储，应改用外部数据库。
