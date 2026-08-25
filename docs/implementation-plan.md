@@ -60,11 +60,10 @@
 `benefitsJson` 的元素结构：
 
 ```ts
-type Benefit = {
-  type: "token" | "voucher" | "points";
-  amount: number;
-  unit?: string;
-};
+type Benefit =
+  | { type: "token" | "voucher" | "points"; amount: number; unit?: string }
+  | { type: "token-plan"; planName: string; validDays: number }
+  | { type: "other"; description: string };
 ```
 
 在 `createdAt DESC, id DESC` 上建立索引；如增加活动状态筛选，再建立 `(status, createdAt DESC)` 索引。JSON 字段保留在单表中，减少 MVP 的关联查询和迁移成本。
@@ -77,7 +76,7 @@ type Benefit = {
 
 - `page`：从 1 开始，默认 1，非法值回退为 1。
 - `pageSize`：默认 12，最大 50。
-- `benefitType`：可选，`token`、`voucher` 或 `points`。
+- `benefitType`：可选，`token`、`voucher`、`points`、`token-plan` 或 `other`。
 - `kind`：默认值 `active`；`active` 只返回 `isLongTerm=false` 且当前时间位于活动有效期内的记录，`long-term` 只返回 `isLongTerm=true` 的记录。
 - `status`：仅服务端内部/管理员使用，公开请求固定返回 `published`。
 
@@ -149,7 +148,7 @@ type Benefit = {
 
 - 提供商名称：必填，去除首尾空格，长度 1-120。
 - 官网：必须是 `http` 或 `https` URL；拒绝 IP 地址、localhost、内网主机名、用户名密码段和明显的控制字符。
-- 额度：至少一项；类型只能是 token、voucher、points；数额必须为有限正数，前端支持添加/删除多项。
+- 额度：至少一项；普通类型（token、voucher、points）数额必须为有限正数；Token Plan 必须填写套餐名称和正整数有效天数；其他必须填写说明。前端支持添加/删除多项。
 - 邀请码：`requiresInvite=true` 时必填；否则强制保存为 null。
 - 新账号要求：`requiresNewAccount` 为必填布尔值，已有记录迁移时默认 `false`。
 - 一键领取链接：可选，但若填写必须为有效 HTTP(S) URL；允许 query 中携带邀请码。

@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-type BenefitType = "token" | "voucher" | "points";
-type Benefit = { type: BenefitType; amount: number; unit?: string };
+type MeasuredBenefit = { type: "token" | "voucher" | "points"; amount: number; unit?: string };
+type Benefit = MeasuredBenefit | { type: "token-plan"; planName: string; validDays: number } | { type: "other"; description: string };
 type Offer = {
   id: string;
   providerName: string;
@@ -29,7 +29,7 @@ const tabs: { kind: Kind; label: string; eyebrow: string }[] = [
   { kind: "active", label: "有效期活动", eyebrow: "限时福利" },
   { kind: "long-term", label: "长期活动", eyebrow: "持续可用" },
 ];
-const benefitLabels: Record<BenefitType, string> = { token: "Token", voucher: "代金券", points: "积分" };
+const benefitLabels: Record<MeasuredBenefit["type"], string> = { token: "Token", voucher: "代金券", points: "积分" };
 const formatAmount = (amount: number) => new Intl.NumberFormat("zh-CN", { notation: "compact", maximumFractionDigits: 1 }).format(amount);
 const formatDate = (value?: string | null) => {
   if (!value) return "未注明";
@@ -53,7 +53,7 @@ function OfferCard({ offer }: { offer: Offer }) {
         <div className="offer-card__provider"><h2>{offer.providerName}</h2><a href={offer.officialUrl} target="_blank" rel="noreferrer noopener">{hostname} <span aria-hidden="true">↗</span></a></div>
         <time className="offer-card__date" dateTime={offer.createdAt}>{formatDate(offer.createdAt)}</time>
       </div>
-      <div className="benefit-list" aria-label="免费额度">{offer.benefits.map((benefit, index) => <span className={`benefit benefit--${benefit.type}`} key={`${benefit.type}-${index}`}><strong>{formatAmount(benefit.amount)}</strong> {benefit.unit || benefitLabels[benefit.type]}</span>)}</div>
+      <div className="benefit-list" aria-label="免费额度">{offer.benefits.map((benefit, index) => <BenefitBadge benefit={benefit} key={`${benefit.type}-${index}`} />)}</div>
       <dl className="offer-meta"><div><dt>活动时间</dt><dd>{offer.isLongTerm ? "长期有效" : `${formatDate(offer.startsAt)} - ${formatDate(offer.endsAt)}`}</dd></div><div><dt>账号要求</dt><dd>{offer.requiresNewAccount ? "需要新注册" : "现有账号可用"}</dd></div><div><dt>领取方式</dt><dd>{offer.requiresInvite ? "需要邀请码" : "直接可用"}</dd></div></dl>
       {offer.models && offer.models.length > 0 && <div className="model-row"><span className="field-label">可用模型</span><div className="model-tags">{offer.models.map((model) => <span key={model}>{model}</span>)}</div></div>}
       {offer.requiresInvite && offer.inviteCode && <div className="invite-row"><span>邀请码</span><code>{offer.inviteCode}</code></div>}
@@ -61,6 +61,12 @@ function OfferCard({ offer }: { offer: Offer }) {
       <div className="offer-actions">{offer.claimUrl ? <a className="button button--primary" href={offer.claimUrl} target="_blank" rel="noreferrer noopener">一键领取 <span aria-hidden="true">↗</span></a> : <a className="button button--secondary" href={offer.officialUrl} target="_blank" rel="noreferrer noopener">前往官网 <span aria-hidden="true">↗</span></a>}</div>
     </article>
   );
+}
+
+function BenefitBadge({ benefit }: { benefit: Benefit }) {
+  if (benefit.type === "token-plan") return <span className="benefit benefit--token-plan"><strong>{benefit.planName}</strong> Token Plan · {benefit.validDays} 天</span>;
+  if (benefit.type === "other") return <span className="benefit benefit--other"><strong>其他</strong> {benefit.description}</span>;
+  return <span className={`benefit benefit--${benefit.type}`}><strong>{formatAmount(benefit.amount)}</strong> {benefit.unit || benefitLabels[benefit.type]}</span>;
 }
 
 export default function Home() {

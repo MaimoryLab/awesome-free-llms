@@ -47,6 +47,8 @@ button { color: inherit; font: inherit; }
 .benefit--token { background: #e9f2e8; color: #287047; }
 .benefit--voucher { background: #fff0e7; color: #ad5728; }
 .benefit--points { background: #eeeaf8; color: #69559c; }
+.benefit--token-plan { background: #e7f0f7; color: #285f84; }
+.benefit--other { background: #eef0ee; color: #4d5851; }
 .offer-meta { border-top: 1px solid var(--line); display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; padding: 14px 0 0; }
 .offer-meta dt, .field-label, .invite-row span { color: var(--muted); font-size: 10px; letter-spacing: .08em; margin-bottom: 5px; text-transform: uppercase; }
 .offer-meta dd { font-size: 12px; margin: 0; }

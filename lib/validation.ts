@@ -2,11 +2,22 @@ import { z } from "zod";
 
 const MAX_BODY_TEXT = 2000;
 
-export const benefitSchema = z.object({
-  type: z.enum(["token", "voucher", "points"]),
-  amount: z.number().finite().positive(),
-  unit: z.string().trim().max(32).optional(),
-});
+export const benefitSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.enum(["token", "voucher", "points"]),
+    amount: z.number().finite().positive(),
+    unit: z.string().trim().max(32).optional(),
+  }),
+  z.object({
+    type: z.literal("token-plan"),
+    planName: z.string().trim().min(1).max(120),
+    validDays: z.number().int().positive().max(36500),
+  }),
+  z.object({
+    type: z.literal("other"),
+    description: z.string().trim().min(1).max(500),
+  }),
+]);
 
 const isForbiddenHost = (hostname: string) => {
   const host = hostname.toLowerCase().replace(/\.$/, "");
@@ -90,5 +101,5 @@ export const listQuerySchema = z.object({
   page: z.coerce.number().int().min(1).catch(1),
   pageSize: z.coerce.number().int().min(1).max(50).catch(12),
   kind: z.enum(["active", "long-term"]).catch("active"),
-  benefitType: z.enum(["token", "voucher", "points"]).optional(),
+  benefitType: z.enum(["token", "voucher", "points", "token-plan", "other"]).optional(),
 });

@@ -4,11 +4,14 @@ import Script from 'next/script';
 import Link from 'next/link';
 import { FormEvent, useEffect, useRef, useState } from 'react';
 
-type BenefitType = 'token' | 'voucher' | 'points';
+type BenefitType = 'token' | 'voucher' | 'points' | 'token-plan' | 'other';
 
 type Benefit = {
   type: BenefitType;
   amount: string;
+  planName: string;
+  validDays: string;
+  description: string;
 };
 
 type FormState = {
@@ -40,7 +43,7 @@ declare global {
 const initialState: FormState = {
   providerName: '',
   officialUrl: '',
-  benefits: [{ type: 'token', amount: '' }],
+  benefits: [{ type: 'token', amount: '', planName: '', validDays: '', description: '' }],
   requiresInvite: false,
   requiresNewAccount: false,
   inviteCode: '',
@@ -56,6 +59,8 @@ const benefitLabels: Record<BenefitType, string> = {
   token: 'Token',
   voucher: '代金券',
   points: '积分',
+  'token-plan': 'Token Plan',
+  other: '其他',
 };
 
 export default function SubmissionForm() {
@@ -100,7 +105,7 @@ export default function SubmissionForm() {
     setErrors((current) => ({ ...current, [key]: '' }));
   };
 
-  const updateBenefit = (index: number, key: keyof Benefit, value: string) => {
+  const updateBenefit = <K extends keyof Benefit>(index: number, key: K, value: Benefit[K]) => {
     setForm((current) => ({
       ...current,
       benefits: current.benefits.map((benefit, itemIndex) => itemIndex === index ? { ...benefit, [key]: value } : benefit),
@@ -117,7 +122,11 @@ export default function SubmissionForm() {
     const nextErrors: Record<string, string> = {};
     if (!form.providerName.trim()) nextErrors.providerName = '请输入提供商名称';
     if (!form.officialUrl.trim()) nextErrors.officialUrl = '请输入官网地址';
-    if (form.benefits.some((benefit) => !benefit.amount || Number(benefit.amount) <= 0)) nextErrors.benefits = '请填写有效的免费额度';
+    if (form.benefits.some((benefit) => {
+      if (benefit.type === 'token-plan') return !benefit.planName.trim() || !Number.isInteger(Number(benefit.validDays)) || Number(benefit.validDays) <= 0;
+      if (benefit.type === 'other') return !benefit.description.trim();
+      return !benefit.amount || Number(benefit.amount) <= 0;
+    })) nextErrors.benefits = '请完整填写免费额度';
     if (form.requiresInvite && !form.inviteCode.trim()) nextErrors.inviteCode = '需要邀请码时必须填写邀请码';
     if (form.claimUrl && !/^https?:\/\//i.test(form.claimUrl)) nextErrors.claimUrl = '领取链接必须是 HTTP(S) 地址';
     if (!form.isLongTerm && !form.startsAt) nextErrors.startsAt = '非长期活动必须填写开始时间';
@@ -145,7 +154,11 @@ export default function SubmissionForm() {
           claimUrl: form.claimUrl.trim() || undefined,
           startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : undefined,
           endsAt: form.isLongTerm || !form.endsAt ? undefined : new Date(form.endsAt).toISOString(),
-          benefits: form.benefits.map((benefit) => ({ ...benefit, amount: Number(benefit.amount) })),
+          benefits: form.benefits.map((benefit) => {
+            if (benefit.type === 'token-plan') return { type: benefit.type, planName: benefit.planName.trim(), validDays: Number(benefit.validDays) };
+            if (benefit.type === 'other') return { type: benefit.type, description: benefit.description.trim() };
+            return { type: benefit.type, amount: Number(benefit.amount) };
+          }),
           models: form.models.map((model) => model.trim()).filter(Boolean),
           turnstileToken,
         }),
@@ -190,10 +203,10 @@ export default function SubmissionForm() {
         <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="mb-5 flex items-end justify-between gap-4">
             <div><p className="text-sm font-semibold uppercase text-cyan-700">免费额度</p><h2 className="mt-2 text-xl font-semibold text-slate-950">可获得什么</h2></div>
-            <button type="button" onClick={() => update('benefits', [...form.benefits, { type: 'token', amount: '' }])} className="rounded-lg border border-cyan-200 px-3 py-2 text-sm font-semibold text-cyan-800 hover:bg-cyan-50">+ 添加额度</button>
+            <button type="button" onClick={() => update('benefits', [...form.benefits, { type: 'token', amount: '', planName: '', validDays: '', description: '' }])} className="rounded-lg border border-cyan-200 px-3 py-2 text-sm font-semibold text-cyan-800 hover:bg-cyan-50">+ 添加额度</button>
           </div>
           <div className="space-y-3">
-            {form.benefits.map((benefit, index) => <div key={index} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]"><select aria-label="额度类型" value={benefit.type} onChange={(event) => updateBenefit(index, 'type', event.target.value)} className={inputClass(errors.benefits)}>{Object.entries(benefitLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><input aria-label="额度数额" type="number" min="0" step="any" value={benefit.amount} onChange={(event) => updateBenefit(index, 'amount', event.target.value)} placeholder="数额" className={inputClass(errors.benefits)} />{form.benefits.length > 1 ? <button type="button" aria-label="删除额度" onClick={() => update('benefits', form.benefits.filter((_, itemIndex) => itemIndex !== index))} className="rounded-lg px-3 text-slate-400 hover:bg-slate-100 hover:text-slate-700">删除</button> : <span />}</div>)}
+            {form.benefits.map((benefit, index) => <div key={index} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto]"><select aria-label="额度类型" value={benefit.type} onChange={(event) => updateBenefit(index, 'type', event.target.value as BenefitType)} className={inputClass(errors.benefits)}>{Object.entries(benefitLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><div className={benefit.type === 'token-plan' ? 'grid gap-3 sm:grid-cols-2' : ''}>{benefit.type === 'token-plan' ? <><input aria-label="套餐名称" value={benefit.planName} onChange={(event) => updateBenefit(index, 'planName', event.target.value)} placeholder="套餐名称" maxLength={120} className={inputClass(errors.benefits)} /><input aria-label="有效天数" type="number" min="1" step="1" value={benefit.validDays} onChange={(event) => updateBenefit(index, 'validDays', event.target.value)} placeholder="有效天数" className={inputClass(errors.benefits)} /></> : benefit.type === 'other' ? <input aria-label="说明" value={benefit.description} onChange={(event) => updateBenefit(index, 'description', event.target.value)} placeholder="说明" maxLength={500} className={inputClass(errors.benefits)} /> : <input aria-label="额度数额" type="number" min="0" step="any" value={benefit.amount} onChange={(event) => updateBenefit(index, 'amount', event.target.value)} placeholder="数额" className={inputClass(errors.benefits)} />}</div>{form.benefits.length > 1 ? <button type="button" aria-label="删除额度" onClick={() => update('benefits', form.benefits.filter((_, itemIndex) => itemIndex !== index))} className="rounded-lg px-3 text-slate-400 hover:bg-slate-100 hover:text-slate-700">删除</button> : <span />}</div>)}
           </div>
           {errors.benefits && <p className="mt-3 text-sm text-rose-600">{errors.benefits}</p>}
         </section>

@@ -28,6 +28,24 @@ test("new account requirement is explicit", () => {
   assert.equal(submissionSchema.safeParse(missingRequirement).success, false);
 });
 
+test("token plans and other benefits use their own fields", () => {
+  const tokenPlan = submissionSchema.safeParse({
+    ...baseSubmission,
+    benefits: [{ type: "token-plan", planName: "Starter", validDays: 30 }],
+  });
+  const other = submissionSchema.safeParse({
+    ...baseSubmission,
+    benefits: [{ type: "other", description: "仅限教育用户" }],
+  });
+  const invalidTokenPlan = submissionSchema.safeParse({
+    ...baseSubmission,
+    benefits: [{ type: "token-plan", planName: "", validDays: 0 }],
+  });
+  assert.equal(tokenPlan.success, true);
+  assert.equal(other.success, true);
+  assert.equal(invalidTokenPlan.success, false);
+});
+
 test("dated offers require a valid start and end", () => {
   const missingDates = submissionSchema.safeParse({
     ...baseSubmission,
