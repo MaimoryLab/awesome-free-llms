@@ -39,7 +39,8 @@ button { color: inherit; font: inherit; }
 .offer-card { background: var(--card); border: 1px solid var(--line); border-radius: 6px; display: flex; flex-direction: column; min-height: 315px; padding: 22px; transition: border-color .18s, box-shadow .18s; }
 .offer-card:hover { border-color: #91ad9a; box-shadow: 0 8px 24px rgba(30, 55, 41, .07); }
 .offer-card__topline { align-items: start; display: flex; }
-.offer-card__mark { align-items: center; background: var(--mint); border-radius: 4px; color: var(--green); display: flex; font-size: 17px; font-weight: 800; height: 38px; justify-content: center; margin-right: 11px; width: 38px; }
+.offer-card__mark { align-items: center; background: var(--mint); border-radius: 4px; color: var(--green); display: flex; flex: 0 0 38px; font-size: 17px; font-weight: 800; height: 38px; justify-content: center; margin-right: 11px; overflow: hidden; position: relative; width: 38px; }
+.offer-card__mark img { background: var(--mint); height: 24px; object-fit: contain; position: absolute; width: 24px; }
 .offer-card__provider { min-width: 0; }
 .offer-card__provider h2 { font-size: 18px; letter-spacing: 0; margin: 1px 0 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .offer-card__provider a { align-items: center; color: var(--muted); display: flex; font-size: 12px; min-height: 24px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

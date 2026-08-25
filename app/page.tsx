@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
 type MeasuredBenefit = { type: "token" | "voucher" | "points"; amount: number; unit?: string };
@@ -30,6 +31,7 @@ const tabs: { kind: Kind; label: string; eyebrow: string }[] = [
   { kind: "long-term", label: "长期活动", eyebrow: "持续可用" },
 ];
 const benefitLabels: Record<MeasuredBenefit["type"], string> = { token: "Token", voucher: "代金券", points: "积分" };
+const benefitUnitLabels: Record<string, string> = { "token:": "百万 Token", "token:million-token": "百万 Token", "voucher:USD": "美元代金券", "voucher:CNY": "人民币代金券" };
 const formatAmount = (amount: number) => new Intl.NumberFormat("zh-CN", { notation: "compact", maximumFractionDigits: 1 }).format(amount);
 const formatDate = (value?: string | null) => {
   if (!value) return "未注明";
@@ -46,10 +48,11 @@ async function fetchOffers(kind: Kind, page: number, signal: AbortSignal) {
 
 function OfferCard({ offer }: { offer: Offer }) {
   const hostname = useMemo(() => { try { return new URL(offer.officialUrl).hostname.replace(/^www\./, ""); } catch { return offer.officialUrl; } }, [offer.officialUrl]);
+  const faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=64`;
   return (
     <article className="offer-card">
       <div className="offer-card__topline">
-        <span className="offer-card__mark" aria-hidden="true">{offer.providerName.slice(0, 1).toUpperCase()}</span>
+        <span className="offer-card__mark" aria-hidden="true"><span>{offer.providerName.slice(0, 1).toUpperCase()}</span><Image src={faviconUrl} alt="" width={24} height={24} unoptimized onError={(event) => { event.currentTarget.hidden = true; }} /></span>
         <div className="offer-card__provider"><h2>{offer.providerName}</h2><a href={offer.officialUrl} target="_blank" rel="noreferrer noopener">{hostname} <span aria-hidden="true">↗</span></a></div>
         <time className="offer-card__date" dateTime={offer.createdAt}>{formatDate(offer.createdAt)}</time>
       </div>
@@ -66,7 +69,7 @@ function OfferCard({ offer }: { offer: Offer }) {
 function BenefitBadge({ benefit }: { benefit: Benefit }) {
   if (benefit.type === "token-plan") return <span className="benefit benefit--token-plan"><strong>{benefit.planName}</strong> Token Plan · {benefit.validDays} 天</span>;
   if (benefit.type === "other") return <span className="benefit benefit--other"><strong>其他</strong> {benefit.description}</span>;
-  return <span className={`benefit benefit--${benefit.type}`}><strong>{formatAmount(benefit.amount)}</strong> {benefit.unit || benefitLabels[benefit.type]}</span>;
+  return <span className={`benefit benefit--${benefit.type}`}><strong>{formatAmount(benefit.amount)}</strong> {benefitUnitLabels[`${benefit.type}:${benefit.unit ?? ""}`] || benefitLabels[benefit.type]}</span>;
 }
 
 export default function Home() {

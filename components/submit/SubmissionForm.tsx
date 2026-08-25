@@ -9,6 +9,7 @@ type BenefitType = 'token' | 'voucher' | 'points' | 'token-plan' | 'other';
 type Benefit = {
   type: BenefitType;
   amount: string;
+  unit: string;
   planName: string;
   validDays: string;
   description: string;
@@ -43,7 +44,7 @@ declare global {
 const initialState: FormState = {
   providerName: '',
   officialUrl: '',
-  benefits: [{ type: 'token', amount: '', planName: '', validDays: '', description: '' }],
+  benefits: [{ type: 'token', amount: '', unit: 'million-token', planName: '', validDays: '', description: '' }],
   requiresInvite: false,
   requiresNewAccount: false,
   inviteCode: '',
@@ -160,6 +161,8 @@ export default function SubmissionForm() {
           benefits: form.benefits.map((benefit) => {
             if (benefit.type === 'token-plan') return { type: benefit.type, planName: benefit.planName.trim(), validDays: Number(benefit.validDays) };
             if (benefit.type === 'other') return { type: benefit.type, description: benefit.description.trim() };
+            if (benefit.type === 'token') return { type: benefit.type, amount: Number(benefit.amount), unit: 'million-token' };
+            if (benefit.type === 'voucher') return { type: benefit.type, amount: Number(benefit.amount), unit: benefit.unit || undefined };
             return { type: benefit.type, amount: Number(benefit.amount) };
           }),
           models: form.models.map((model) => model.trim()).filter(Boolean),
@@ -206,10 +209,18 @@ export default function SubmissionForm() {
         <section className={sectionClass}>
           <div className="mb-5 flex items-end justify-between gap-4">
             <div><p className={kickerClass}>免费额度</p><h2 className="mt-2 text-xl font-semibold text-[var(--ink)]">可获得什么</h2></div>
-            <button type="button" onClick={() => update('benefits', [...form.benefits, { type: 'token', amount: '', planName: '', validDays: '', description: '' }])} className="min-h-11 rounded-md border border-[var(--line)] px-3 text-sm font-semibold text-[var(--green)] transition hover:border-[var(--green)] hover:bg-[var(--mint)]">+ 添加额度</button>
+            <button type="button" onClick={() => update('benefits', [...form.benefits, { type: 'token', amount: '', unit: 'million-token', planName: '', validDays: '', description: '' }])} className="min-h-11 rounded-md border border-[var(--line)] px-3 text-sm font-semibold text-[var(--green)] transition hover:border-[var(--green)] hover:bg-[var(--mint)]">+ 添加额度</button>
           </div>
           <div className="space-y-3">
-            {form.benefits.map((benefit, index) => <div key={index} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto]"><select aria-label="额度类型" aria-invalid={Boolean(errors.benefits)} aria-describedby={errors.benefits ? 'benefits-error' : undefined} value={benefit.type} onChange={(event) => updateBenefit(index, 'type', event.target.value as BenefitType)} className={inputClass(errors.benefits)}>{Object.entries(benefitLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><div className={benefit.type === 'token-plan' ? 'grid gap-3 sm:grid-cols-2' : ''}>{benefit.type === 'token-plan' ? <><input aria-label="套餐名称" value={benefit.planName} onChange={(event) => updateBenefit(index, 'planName', event.target.value)} placeholder="套餐名称" maxLength={120} className={inputClass(errors.benefits)} /><input aria-label="有效天数" type="number" min="1" step="1" value={benefit.validDays} onChange={(event) => updateBenefit(index, 'validDays', event.target.value)} placeholder="有效天数" className={inputClass(errors.benefits)} /></> : benefit.type === 'other' ? <input aria-label="说明" value={benefit.description} onChange={(event) => updateBenefit(index, 'description', event.target.value)} placeholder="说明" maxLength={500} className={inputClass(errors.benefits)} /> : <input aria-label="额度数额" type="number" min="0" step="any" value={benefit.amount} onChange={(event) => updateBenefit(index, 'amount', event.target.value)} placeholder="数额" className={inputClass(errors.benefits)} />}</div>{form.benefits.length > 1 ? <button type="button" aria-label="删除额度" onClick={() => update('benefits', form.benefits.filter((_, itemIndex) => itemIndex !== index))} className="min-h-11 rounded-md px-3 text-slate-500 hover:bg-slate-100 hover:text-slate-800">删除</button> : <span />}</div>)}
+            {form.benefits.map((benefit, index) => (
+              <div key={index} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] sm:items-end">
+                <Field label="额度类型" htmlFor={`benefit-${index}-type`}>
+                  <select id={`benefit-${index}-type`} aria-invalid={Boolean(errors.benefits)} aria-describedby={errors.benefits ? 'benefits-error' : undefined} value={benefit.type} onChange={(event) => { const type = event.target.value as BenefitType; updateBenefit(index, 'type', type); updateBenefit(index, 'unit', type === 'token' ? 'million-token' : ''); }} className={inputClass(errors.benefits)}>{Object.entries(benefitLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+                </Field>
+                <BenefitFields benefit={benefit} index={index} error={errors.benefits} onChange={updateBenefit} />
+                {form.benefits.length > 1 && <button type="button" aria-label="删除额度" onClick={() => update('benefits', form.benefits.filter((_, itemIndex) => itemIndex !== index))} className="min-h-11 rounded-md px-3 text-slate-500 hover:bg-slate-100 hover:text-slate-800">删除</button>}
+              </div>
+            ))}
           </div>
           {errors.benefits && <p id="benefits-error" role="alert" className="mt-3 text-sm text-rose-700">{errors.benefits}</p>}
         </section>
@@ -245,6 +256,24 @@ export default function SubmissionForm() {
 
 function inputClass(error?: string) {
   return `form-control ${error ? 'is-invalid' : ''}`;
+}
+
+function BenefitFields({ benefit, index, error, onChange }: { benefit: Benefit; index: number; error?: string; onChange: <K extends keyof Benefit>(index: number, key: K, value: Benefit[K]) => void }) {
+  const describedBy = error ? 'benefits-error' : undefined;
+  if (benefit.type === 'token-plan') return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <Field label="套餐名称" htmlFor={`benefit-${index}-plan`}><input id={`benefit-${index}-plan`} aria-invalid={Boolean(error)} aria-describedby={describedBy} value={benefit.planName} onChange={(event) => onChange(index, 'planName', event.target.value)} maxLength={120} className={inputClass(error)} /></Field>
+      <Field label="有效天数" htmlFor={`benefit-${index}-days`}><input id={`benefit-${index}-days`} aria-invalid={Boolean(error)} aria-describedby={describedBy} type="number" min="1" step="1" value={benefit.validDays} onChange={(event) => onChange(index, 'validDays', event.target.value)} className={inputClass(error)} /></Field>
+    </div>
+  );
+  if (benefit.type === 'other') return <Field label="说明" htmlFor={`benefit-${index}-description`}><input id={`benefit-${index}-description`} aria-invalid={Boolean(error)} aria-describedby={describedBy} value={benefit.description} onChange={(event) => onChange(index, 'description', event.target.value)} maxLength={500} className={inputClass(error)} /></Field>;
+  return (
+    <div className={`grid gap-3 ${benefit.type === 'points' ? '' : 'sm:grid-cols-2'}`}>
+      <Field label="数额" htmlFor={`benefit-${index}-amount`}><input id={`benefit-${index}-amount`} aria-invalid={Boolean(error)} aria-describedby={describedBy} type="number" min="0" step="any" value={benefit.amount} onChange={(event) => onChange(index, 'amount', event.target.value)} className={inputClass(error)} /></Field>
+      {benefit.type === 'token' && <Field label="单位" htmlFor={`benefit-${index}-unit`}><input id={`benefit-${index}-unit`} value="百万 Token" readOnly className={`${inputClass()} bg-[var(--paper)] text-[var(--muted)]`} /></Field>}
+      {benefit.type === 'voucher' && <Field label="单位" htmlFor={`benefit-${index}-unit`} hint="可选"><select id={`benefit-${index}-unit`} value={benefit.unit} onChange={(event) => onChange(index, 'unit', event.target.value)} className={inputClass()}><option value="">未注明</option><option value="USD">美元 ($)</option><option value="CNY">人民币 (¥)</option></select></Field>}
+    </div>
+  );
 }
 
 function Field({ label, htmlFor, required, hint, error, children }: { label: string; htmlFor?: string; required?: boolean; hint?: string; error?: string; children: React.ReactNode }) {
