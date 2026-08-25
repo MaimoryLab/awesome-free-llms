@@ -53,6 +53,7 @@ export const submissionSchema = z.object({
   officialUrl: publicUrlSchema,
   benefits: z.array(benefitSchema).min(1).max(20),
   requiresInvite: z.boolean(),
+  requiresNewAccount: z.boolean(),
   inviteCode: z.string().trim().max(256).optional(),
   claimUrl: optionalUrlSchema,
   startsAt: isoDateSchema.optional(),

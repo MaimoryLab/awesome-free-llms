@@ -16,6 +16,7 @@ type FormState = {
   officialUrl: string;
   benefits: Benefit[];
   requiresInvite: boolean;
+  requiresNewAccount: boolean;
   inviteCode: string;
   claimUrl: string;
   startsAt: string;
@@ -41,6 +42,7 @@ const initialState: FormState = {
   officialUrl: '',
   benefits: [{ type: 'token', amount: '' }],
   requiresInvite: false,
+  requiresNewAccount: false,
   inviteCode: '',
   claimUrl: '',
   startsAt: '',
@@ -201,6 +203,7 @@ export default function SubmissionForm() {
           <div className="mt-5 grid gap-5 sm:grid-cols-2">
             <Toggle label="需要邀请码" description="领取活动前需要填写指定邀请码" checked={form.requiresInvite} onChange={(checked) => { update('requiresInvite', checked); if (!checked) update('inviteCode', ''); }} />
             {form.requiresInvite && <Field label="邀请码" required error={errors.inviteCode}><input value={form.inviteCode} onChange={(event) => update('inviteCode', event.target.value)} placeholder="请输入邀请码" required className={inputClass(errors.inviteCode)} /></Field>}
+            <Toggle label="需要新注册账号" description="活动仅适用于新注册的用户账号" checked={form.requiresNewAccount} onChange={(checked) => update('requiresNewAccount', checked)} />
             <Field label="一键领取链接" hint="可选" error={errors.claimUrl}><input type="url" value={form.claimUrl} onChange={(event) => update('claimUrl', event.target.value)} placeholder="https://example.com/claim" className={inputClass(errors.claimUrl)} /></Field>
           </div>
         </section>

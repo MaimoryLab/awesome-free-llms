@@ -5,7 +5,7 @@
 构建一个前后端分离的免费 LLM 优惠信息站：
 
 - 前端以卡片形式展示优惠信息，默认按“最新发布”倒序排列。
-- 提供线索提交页面，收集提供商、额度、邀请码、领取链接、活动时间和模型等信息。
+- 提供线索提交页面，收集提供商、额度、邀请码、新账号要求、领取链接、活动时间和模型等信息。
 - 使用 Next.js App Router 提供全栈能力：页面负责展示，Route Handlers 负责 JSON API。
 - 使用 SQLite 持久化数据。
 - 提交接口必须在服务端校验 Cloudflare Turnstile，客户端校验不能作为安全边界。
@@ -45,6 +45,7 @@
 | `officialUrl` | text | 官网 URL；服务端拒绝 IP、localhost 和非 HTTP(S) 地址 |
 | `benefitsJson` | text | JSON 数组，记录额度类型和数额 |
 | `requiresInvite` | integer | SQLite 布尔值；是否需要邀请码 |
+| `requiresNewAccount` | integer | SQLite 布尔值；是否需要新注册账号 |
 | `inviteCode` | text nullable | 需要邀请码时保存；否则为 null |
 | `claimUrl` | text nullable | 一键领取链接，可包含邀请码 |
 | `startsAt` | text nullable | ISO 8601 时间；长期活动可为空 |
@@ -112,6 +113,7 @@ type Benefit = {
   officialUrl: string;
   benefits: Benefit[];
   requiresInvite: boolean;
+  requiresNewAccount: boolean;
   inviteCode?: string;
   claimUrl?: string;
   startsAt?: string;
@@ -149,6 +151,7 @@ type Benefit = {
 - 官网：必须是 `http` 或 `https` URL；拒绝 IP 地址、localhost、内网主机名、用户名密码段和明显的控制字符。
 - 额度：至少一项；类型只能是 token、voucher、points；数额必须为有限正数，前端支持添加/删除多项。
 - 邀请码：`requiresInvite=true` 时必填；否则强制保存为 null。
+- 新账号要求：`requiresNewAccount` 为必填布尔值，已有记录迁移时默认 `false`。
 - 一键领取链接：可选，但若填写必须为有效 HTTP(S) URL；允许 query 中携带邀请码。
 - 活动时间：长期活动时 `isLongTerm=true` 且不要求结束时间；非长期活动必须填写开始和结束时间，结束时间不能早于开始时间。
 - 备注：可选，长度上限 2000。
@@ -163,7 +166,7 @@ type Benefit = {
 - Tab 一：“有效期活动”，只展示当前时间有效的非长期活动，按创建时间从新到旧排列。
 - Tab 二：“长期活动”，只展示 `isLongTerm=true` 的活动，按创建时间从新到旧排列。
 - 两个 Tab 的分页状态相互隔离，切回时保留各自页码。
-- 卡片显示：提供商、额度徽章、模型列表、活动时间、邀请码提示、备注和领取按钮。
+- 卡片显示：提供商、额度徽章、模型列表、活动时间、账号要求、邀请码提示、备注和领取按钮。
 - 官网和领取链接使用新标签页打开，并设置 `rel="noreferrer noopener"`。
 - 空状态、加载状态、错误状态和分页末页都要有明确反馈。
 - 响应式布局：移动端单列，桌面端 2-3 列；分页按钮在窄屏保持可操作。
@@ -172,6 +175,7 @@ type Benefit = {
 
 - 分组呈现基本信息、额度、领取条件、活动时间和备注。
 - “需要邀请码”使用开关控件；开启后显示邀请码字段，关闭时清空值。
+- “需要新注册账号”使用同款开关控件。
 - 额度支持动态增加/删除；至少保留一行。
 - “长期活动”使用同款开关控件；开启后禁用并清空结束时间。
 - Turnstile 未完成时禁用提交按钮；提交中防重复提交。

@@ -8,6 +8,7 @@ export type OfferRow = {
   officialUrl: string;
   benefitsJson: string;
   requiresInvite: number;
+  requiresNewAccount: number;
   inviteCode: string | null;
   claimUrl: string | null;
   startsAt: string | null;
@@ -40,6 +41,7 @@ function createDatabase() {
       officialUrl TEXT NOT NULL,
       benefitsJson TEXT NOT NULL,
       requiresInvite INTEGER NOT NULL DEFAULT 0,
+      requiresNewAccount INTEGER NOT NULL DEFAULT 0,
       inviteCode TEXT,
       claimUrl TEXT,
       startsAt TEXT,
@@ -54,6 +56,10 @@ function createDatabase() {
     CREATE INDEX IF NOT EXISTS offers_created_idx ON offers (createdAt DESC, id DESC);
     CREATE INDEX IF NOT EXISTS offers_status_created_idx ON offers (status, createdAt DESC, id DESC);
   `);
+  const columns = db.pragma("table_info(offers)") as { name: string }[];
+  if (!columns.some(({ name }) => name === "requiresNewAccount")) {
+    db.exec("ALTER TABLE offers ADD COLUMN requiresNewAccount INTEGER NOT NULL DEFAULT 0");
+  }
   return db;
 }
 
@@ -69,6 +75,7 @@ export function parseOffer(row: OfferRow) {
     officialUrl: row.officialUrl,
     benefits: JSON.parse(row.benefitsJson),
     requiresInvite: Boolean(row.requiresInvite),
+    requiresNewAccount: Boolean(row.requiresNewAccount),
     inviteCode: row.inviteCode,
     claimUrl: row.claimUrl,
     startsAt: row.startsAt,

@@ -11,6 +11,7 @@ type Offer = {
   officialUrl: string;
   benefits: Benefit[];
   requiresInvite: boolean;
+  requiresNewAccount: boolean;
   inviteCode?: string | null;
   claimUrl?: string | null;
   startsAt?: string | null;
@@ -53,7 +54,7 @@ function OfferCard({ offer }: { offer: Offer }) {
         <time className="offer-card__date" dateTime={offer.createdAt}>{formatDate(offer.createdAt)}</time>
       </div>
       <div className="benefit-list" aria-label="免费额度">{offer.benefits.map((benefit, index) => <span className={`benefit benefit--${benefit.type}`} key={`${benefit.type}-${index}`}><strong>{formatAmount(benefit.amount)}</strong> {benefit.unit || benefitLabels[benefit.type]}</span>)}</div>
-      <dl className="offer-meta"><div><dt>活动时间</dt><dd>{offer.isLongTerm ? "长期有效" : `${formatDate(offer.startsAt)} - ${formatDate(offer.endsAt)}`}</dd></div><div><dt>领取方式</dt><dd>{offer.requiresInvite ? "需要邀请码" : "直接可用"}</dd></div></dl>
+      <dl className="offer-meta"><div><dt>活动时间</dt><dd>{offer.isLongTerm ? "长期有效" : `${formatDate(offer.startsAt)} - ${formatDate(offer.endsAt)}`}</dd></div><div><dt>账号要求</dt><dd>{offer.requiresNewAccount ? "需要新注册" : "现有账号可用"}</dd></div><div><dt>领取方式</dt><dd>{offer.requiresInvite ? "需要邀请码" : "直接可用"}</dd></div></dl>
       {offer.models && offer.models.length > 0 && <div className="model-row"><span className="field-label">可用模型</span><div className="model-tags">{offer.models.map((model) => <span key={model}>{model}</span>)}</div></div>}
       {offer.requiresInvite && offer.inviteCode && <div className="invite-row"><span>邀请码</span><code>{offer.inviteCode}</code></div>}
       {offer.notes && <p className="offer-notes">{offer.notes}</p>}

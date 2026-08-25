@@ -52,9 +52,9 @@ export async function POST(request: Request) {
   const startsAt = input.startsAt ? new Date(input.startsAt).toISOString() : null;
   const endsAt = input.endsAt ? new Date(input.endsAt).toISOString() : null;
   getDb().prepare(`
-    INSERT INTO offers (id, providerName, officialUrl, benefitsJson, requiresInvite, inviteCode, claimUrl,
+    INSERT INTO offers (id, providerName, officialUrl, benefitsJson, requiresInvite, requiresNewAccount, inviteCode, claimUrl,
       startsAt, endsAt, isLongTerm, notes, modelsJson, status, createdAt, updatedAt)
-    VALUES (@id, @providerName, @officialUrl, @benefitsJson, @requiresInvite, @inviteCode, @claimUrl,
+    VALUES (@id, @providerName, @officialUrl, @benefitsJson, @requiresInvite, @requiresNewAccount, @inviteCode, @claimUrl,
       @startsAt, @endsAt, @isLongTerm, @notes, @modelsJson, 'published', @createdAt, @updatedAt)
   `).run({
     id,
@@ -62,6 +62,7 @@ export async function POST(request: Request) {
     officialUrl: new URL(input.officialUrl).toString(),
     benefitsJson: JSON.stringify(input.benefits),
     requiresInvite: input.requiresInvite ? 1 : 0,
+    requiresNewAccount: input.requiresNewAccount ? 1 : 0,
     inviteCode: input.requiresInvite ? input.inviteCode?.trim() ?? null : null,
     claimUrl: input.claimUrl ? new URL(input.claimUrl).toString() : null,
     startsAt,

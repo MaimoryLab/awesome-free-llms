@@ -7,6 +7,7 @@ const baseSubmission = {
   officialUrl: "https://example.com",
   benefits: [{ type: "token" as const, amount: 1000 }],
   requiresInvite: false,
+  requiresNewAccount: false,
   isLongTerm: false,
   startsAt: "2026-08-01T00:00:00.000Z",
   endsAt: "2026-09-01T00:00:00.000Z",
@@ -19,6 +20,12 @@ test("official URL rejects IP addresses", () => {
     officialUrl: "https://127.0.0.1/offer",
   });
   assert.equal(result.success, false);
+});
+
+test("new account requirement is explicit", () => {
+  const missingRequirement: Partial<typeof baseSubmission> = { ...baseSubmission };
+  delete missingRequirement.requiresNewAccount;
+  assert.equal(submissionSchema.safeParse(missingRequirement).success, false);
 });
 
 test("dated offers require a valid start and end", () => {
