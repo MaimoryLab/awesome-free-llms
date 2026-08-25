@@ -63,6 +63,9 @@ const benefitLabels: Record<BenefitType, string> = {
   other: '其他',
 };
 
+const sectionClass = 'rounded-md border border-[var(--line)] bg-white p-5 shadow-[0_1px_2px_rgba(23,33,28,0.04)] sm:p-7';
+const kickerClass = 'text-xs font-bold uppercase tracking-[.12em] text-[var(--orange)]';
+
 export default function SubmissionForm() {
   const [form, setForm] = useState<FormState>(initialState);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -183,81 +186,81 @@ export default function SubmissionForm() {
   return (
     <>
       <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" strategy="afterInteractive" onLoad={() => { setTurnstileReady(true); renderTurnstile(); }} />
-      <form onSubmit={submit} className="space-y-8">
-        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <form onSubmit={submit} className="space-y-6">
+        <section className={sectionClass}>
           <div className="mb-6">
-            <p className="text-sm font-semibold uppercase text-cyan-700">基本信息</p>
-            <h2 className="mt-2 text-2xl font-semibold text-slate-950">分享一个免费额度</h2>
-            <p className="mt-2 text-sm text-slate-500">请提供可公开核验的信息，帮助其他开发者快速找到可用的模型资源。</p>
+            <p className={kickerClass}>基本信息</p>
+            <h2 className="mt-2 text-2xl font-semibold text-[var(--ink)]">分享一个免费额度</h2>
+            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">请提供可公开核验的信息，帮助其他开发者快速找到可用的模型资源。</p>
           </div>
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="提供商名称" required error={errors.providerName}>
-              <input value={form.providerName} onChange={(event) => update('providerName', event.target.value)} placeholder="例如 OpenAI" required className={inputClass(errors.providerName)} />
+            <Field label="提供商名称" htmlFor="providerName" required error={errors.providerName}>
+              <input id="providerName" aria-invalid={Boolean(errors.providerName)} aria-describedby={errors.providerName ? 'providerName-error' : undefined} value={form.providerName} onChange={(event) => update('providerName', event.target.value)} placeholder="例如 OpenAI" required className={inputClass(errors.providerName)} />
             </Field>
-            <Field label="官网地址" required error={errors.officialUrl}>
-              <input type="url" value={form.officialUrl} onChange={(event) => update('officialUrl', event.target.value)} placeholder="https://example.com" required className={inputClass(errors.officialUrl)} />
+            <Field label="官网地址" htmlFor="officialUrl" required error={errors.officialUrl}>
+              <input id="officialUrl" aria-invalid={Boolean(errors.officialUrl)} aria-describedby={errors.officialUrl ? 'officialUrl-error' : undefined} type="url" value={form.officialUrl} onChange={(event) => update('officialUrl', event.target.value)} placeholder="https://example.com" required className={inputClass(errors.officialUrl)} />
             </Field>
           </div>
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <section className={sectionClass}>
           <div className="mb-5 flex items-end justify-between gap-4">
-            <div><p className="text-sm font-semibold uppercase text-cyan-700">免费额度</p><h2 className="mt-2 text-xl font-semibold text-slate-950">可获得什么</h2></div>
-            <button type="button" onClick={() => update('benefits', [...form.benefits, { type: 'token', amount: '', planName: '', validDays: '', description: '' }])} className="rounded-lg border border-cyan-200 px-3 py-2 text-sm font-semibold text-cyan-800 hover:bg-cyan-50">+ 添加额度</button>
+            <div><p className={kickerClass}>免费额度</p><h2 className="mt-2 text-xl font-semibold text-[var(--ink)]">可获得什么</h2></div>
+            <button type="button" onClick={() => update('benefits', [...form.benefits, { type: 'token', amount: '', planName: '', validDays: '', description: '' }])} className="min-h-11 rounded-md border border-[var(--line)] px-3 text-sm font-semibold text-[var(--green)] transition hover:border-[var(--green)] hover:bg-[var(--mint)]">+ 添加额度</button>
           </div>
           <div className="space-y-3">
-            {form.benefits.map((benefit, index) => <div key={index} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto]"><select aria-label="额度类型" value={benefit.type} onChange={(event) => updateBenefit(index, 'type', event.target.value as BenefitType)} className={inputClass(errors.benefits)}>{Object.entries(benefitLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><div className={benefit.type === 'token-plan' ? 'grid gap-3 sm:grid-cols-2' : ''}>{benefit.type === 'token-plan' ? <><input aria-label="套餐名称" value={benefit.planName} onChange={(event) => updateBenefit(index, 'planName', event.target.value)} placeholder="套餐名称" maxLength={120} className={inputClass(errors.benefits)} /><input aria-label="有效天数" type="number" min="1" step="1" value={benefit.validDays} onChange={(event) => updateBenefit(index, 'validDays', event.target.value)} placeholder="有效天数" className={inputClass(errors.benefits)} /></> : benefit.type === 'other' ? <input aria-label="说明" value={benefit.description} onChange={(event) => updateBenefit(index, 'description', event.target.value)} placeholder="说明" maxLength={500} className={inputClass(errors.benefits)} /> : <input aria-label="额度数额" type="number" min="0" step="any" value={benefit.amount} onChange={(event) => updateBenefit(index, 'amount', event.target.value)} placeholder="数额" className={inputClass(errors.benefits)} />}</div>{form.benefits.length > 1 ? <button type="button" aria-label="删除额度" onClick={() => update('benefits', form.benefits.filter((_, itemIndex) => itemIndex !== index))} className="rounded-lg px-3 text-slate-400 hover:bg-slate-100 hover:text-slate-700">删除</button> : <span />}</div>)}
+            {form.benefits.map((benefit, index) => <div key={index} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto]"><select aria-label="额度类型" aria-invalid={Boolean(errors.benefits)} aria-describedby={errors.benefits ? 'benefits-error' : undefined} value={benefit.type} onChange={(event) => updateBenefit(index, 'type', event.target.value as BenefitType)} className={inputClass(errors.benefits)}>{Object.entries(benefitLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><div className={benefit.type === 'token-plan' ? 'grid gap-3 sm:grid-cols-2' : ''}>{benefit.type === 'token-plan' ? <><input aria-label="套餐名称" value={benefit.planName} onChange={(event) => updateBenefit(index, 'planName', event.target.value)} placeholder="套餐名称" maxLength={120} className={inputClass(errors.benefits)} /><input aria-label="有效天数" type="number" min="1" step="1" value={benefit.validDays} onChange={(event) => updateBenefit(index, 'validDays', event.target.value)} placeholder="有效天数" className={inputClass(errors.benefits)} /></> : benefit.type === 'other' ? <input aria-label="说明" value={benefit.description} onChange={(event) => updateBenefit(index, 'description', event.target.value)} placeholder="说明" maxLength={500} className={inputClass(errors.benefits)} /> : <input aria-label="额度数额" type="number" min="0" step="any" value={benefit.amount} onChange={(event) => updateBenefit(index, 'amount', event.target.value)} placeholder="数额" className={inputClass(errors.benefits)} />}</div>{form.benefits.length > 1 ? <button type="button" aria-label="删除额度" onClick={() => update('benefits', form.benefits.filter((_, itemIndex) => itemIndex !== index))} className="min-h-11 rounded-md px-3 text-slate-500 hover:bg-slate-100 hover:text-slate-800">删除</button> : <span />}</div>)}
           </div>
-          {errors.benefits && <p className="mt-3 text-sm text-rose-600">{errors.benefits}</p>}
+          {errors.benefits && <p id="benefits-error" role="alert" className="mt-3 text-sm text-rose-700">{errors.benefits}</p>}
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <p className="text-sm font-semibold uppercase text-cyan-700">领取条件</p>
+        <section className={sectionClass}>
+          <p className={kickerClass}>领取条件</p>
           <div className="mt-5 grid gap-5 sm:grid-cols-2">
             <Toggle label="需要邀请码" description="领取活动前需要填写指定邀请码" checked={form.requiresInvite} onChange={(checked) => { update('requiresInvite', checked); if (!checked) update('inviteCode', ''); }} />
-            {form.requiresInvite && <Field label="邀请码" required error={errors.inviteCode}><input value={form.inviteCode} onChange={(event) => update('inviteCode', event.target.value)} placeholder="请输入邀请码" required className={inputClass(errors.inviteCode)} /></Field>}
+            {form.requiresInvite && <Field label="邀请码" htmlFor="inviteCode" required error={errors.inviteCode}><input id="inviteCode" aria-invalid={Boolean(errors.inviteCode)} aria-describedby={errors.inviteCode ? 'inviteCode-error' : undefined} value={form.inviteCode} onChange={(event) => update('inviteCode', event.target.value)} placeholder="请输入邀请码" required className={inputClass(errors.inviteCode)} /></Field>}
             <Toggle label="需要新注册账号" description="活动仅适用于新注册的用户账号" checked={form.requiresNewAccount} onChange={(checked) => update('requiresNewAccount', checked)} />
-            <Field label="一键领取链接" hint="可选" error={errors.claimUrl}><input type="url" value={form.claimUrl} onChange={(event) => update('claimUrl', event.target.value)} placeholder="https://example.com/claim" className={inputClass(errors.claimUrl)} /></Field>
+            <Field label="一键领取链接" htmlFor="claimUrl" hint="可选" error={errors.claimUrl}><input id="claimUrl" aria-invalid={Boolean(errors.claimUrl)} aria-describedby={errors.claimUrl ? 'claimUrl-error' : undefined} type="url" value={form.claimUrl} onChange={(event) => update('claimUrl', event.target.value)} placeholder="https://example.com/claim" className={inputClass(errors.claimUrl)} /></Field>
           </div>
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <p className="text-sm font-semibold uppercase text-cyan-700">活动时间</p>
+        <section className={sectionClass}>
+          <p className={kickerClass}>活动时间</p>
           <div className="mt-5"><Toggle label="长期活动" description="活动持续有效，不设置结束时间" checked={form.isLongTerm} onChange={(checked) => { update('isLongTerm', checked); if (checked) update('endsAt', ''); }} /></div>
-          <div className="mt-4 grid gap-5 sm:grid-cols-2"><Field label="开始时间" required={!form.isLongTerm} error={errors.startsAt}><input type="datetime-local" required={!form.isLongTerm} value={form.startsAt} onChange={(event) => update('startsAt', event.target.value)} className={inputClass(errors.startsAt)} /></Field><Field label="结束时间" required={!form.isLongTerm} hint={form.isLongTerm ? '长期活动无需填写' : undefined} error={errors.endsAt}><input type="datetime-local" required={!form.isLongTerm} disabled={form.isLongTerm} value={form.endsAt} onChange={(event) => update('endsAt', event.target.value)} className={inputClass(errors.endsAt)} /></Field></div>
+          <div className="mt-4 grid gap-5 sm:grid-cols-2"><Field label="开始时间" htmlFor="startsAt" required={!form.isLongTerm} error={errors.startsAt}><input id="startsAt" aria-invalid={Boolean(errors.startsAt)} aria-describedby={errors.startsAt ? 'startsAt-error' : undefined} type="datetime-local" required={!form.isLongTerm} value={form.startsAt} onChange={(event) => update('startsAt', event.target.value)} className={inputClass(errors.startsAt)} /></Field><Field label="结束时间" htmlFor="endsAt" required={!form.isLongTerm} hint={form.isLongTerm ? '长期活动无需填写' : undefined} error={errors.endsAt}><input id="endsAt" aria-invalid={Boolean(errors.endsAt)} aria-describedby={errors.endsAt ? 'endsAt-error' : undefined} type="datetime-local" required={!form.isLongTerm} disabled={form.isLongTerm} value={form.endsAt} onChange={(event) => update('endsAt', event.target.value)} className={inputClass(errors.endsAt)} /></Field></div>
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <div className="grid gap-5 sm:grid-cols-2"><Field label="可以使用的模型" hint="可选，每行一个"><div className="space-y-2">{form.models.map((model, index) => <div key={index} className="flex gap-2"><input value={model} onChange={(event) => updateModel(index, event.target.value)} placeholder="例如 gpt-4o-mini" className={inputClass(errors.models)} />{form.models.length > 1 && <button type="button" aria-label="删除模型" onClick={() => update('models', form.models.filter((_, itemIndex) => itemIndex !== index))} className="rounded-lg px-3 text-slate-400 hover:bg-slate-100 hover:text-slate-700">删除</button>}</div>)}<button type="button" onClick={() => update('models', [...form.models, ''])} className="text-sm font-semibold text-cyan-800 hover:text-cyan-950">+ 添加模型</button></div></Field><Field label="备注" hint="可选"><textarea rows={5} maxLength={2000} value={form.notes} onChange={(event) => update('notes', event.target.value)} placeholder="补充活动限制、地区或使用说明" className={inputClass()} /></Field></div>
+        <section className={sectionClass}>
+          <div className="grid gap-5 sm:grid-cols-2"><Field label="可以使用的模型" htmlFor="model-0" hint="可选，每行一个" error={errors.models}><div className="space-y-2">{form.models.map((model, index) => <div key={index} className="flex gap-2"><input id={`model-${index}`} aria-label={index === 0 ? undefined : `模型 ${index + 1}`} value={model} onChange={(event) => updateModel(index, event.target.value)} placeholder="例如 gpt-4o-mini" className={inputClass(errors.models)} />{form.models.length > 1 && <button type="button" aria-label="删除模型" onClick={() => update('models', form.models.filter((_, itemIndex) => itemIndex !== index))} className="min-h-11 rounded-md px-3 text-slate-500 hover:bg-slate-100 hover:text-slate-800">删除</button>}</div>)}<button type="button" onClick={() => update('models', [...form.models, ''])} className="min-h-11 text-sm font-semibold text-[var(--green)] hover:text-[var(--green-dark)]">+ 添加模型</button></div></Field><Field label="备注" htmlFor="notes" hint="可选" error={errors.notes}><textarea id="notes" rows={5} maxLength={2000} value={form.notes} onChange={(event) => update('notes', event.target.value)} placeholder="补充活动限制、地区或使用说明" className={inputClass(errors.notes)} /></Field></div>
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-slate-50 p-6 sm:p-8"><p className="text-sm font-semibold text-slate-800">安全验证</p><div ref={turnstileRef} className="mt-4 min-h-[65px]" />{!siteKey && <p className="text-sm text-amber-700">尚未配置 Turnstile 站点密钥，暂时无法提交。</p>}{siteKey && !turnstileReady && <p className="text-sm text-slate-500">正在加载验证...</p>}{turnstileError && <p className="mt-2 text-sm text-rose-600">{turnstileError}</p>}</section>
-        {errors.form && <p className="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-700">{errors.form}</p>}
-        {successId && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">提交成功，编号：<strong>{successId}</strong>。感谢你的分享！</div>}
-        <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between"><Link href="/" className="text-center text-sm font-semibold text-slate-600 hover:text-slate-950">返回活动列表</Link><button type="submit" disabled={submitting || !turnstileToken || !siteKey} className="rounded-lg bg-slate-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-50">{submitting ? '提交中...' : '提交线索'}</button></div>
+        <section className="rounded-md border border-[var(--line)] bg-[#e9eee9] p-5 sm:p-7"><p className="text-sm font-semibold text-[var(--ink)]">安全验证</p><div ref={turnstileRef} className="mt-4 min-h-[65px]" />{!siteKey && <p className="text-sm text-amber-800">尚未配置 Turnstile 站点密钥，暂时无法提交。</p>}{siteKey && !turnstileReady && <p className="text-sm text-[var(--muted)]">正在加载验证...</p>}{turnstileError && <p role="alert" className="mt-2 text-sm text-rose-700">{turnstileError}</p>}</section>
+        {errors.form && <p role="alert" className="rounded-md bg-rose-50 px-4 py-3 text-sm text-rose-800">{errors.form}</p>}
+        {successId && <div role="status" aria-live="polite" className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">提交成功，编号：<strong>{successId}</strong>。感谢你的分享！</div>}
+        <div className="flex flex-col-reverse gap-4 pb-16 sm:flex-row sm:items-center sm:justify-between"><Link href="/" className="inline-flex min-h-11 items-center justify-center text-sm font-semibold text-[var(--muted)] hover:text-[var(--ink)]">返回活动列表</Link><button type="submit" aria-busy={submitting} disabled={submitting || !turnstileToken || !siteKey} className="min-h-12 rounded-md bg-[var(--green)] px-6 text-sm font-semibold text-white transition hover:bg-[var(--green-dark)] disabled:cursor-not-allowed disabled:opacity-50">{submitting ? '提交中...' : '提交线索'}</button></div>
       </form>
     </>
   );
 }
 
 function inputClass(error?: string) {
-  return `w-full rounded-lg border bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100 ${error ? 'border-rose-400' : 'border-slate-200'}`;
+  return `form-control ${error ? 'is-invalid' : ''}`;
 }
 
-function Field({ label, required, hint, error, children }: { label: string; required?: boolean; hint?: string; error?: string; children: React.ReactNode }) {
-  return <div><label className="mb-2 block text-sm font-semibold text-slate-700">{label} {required && <span className="text-rose-500">*</span>} {hint && <span className="font-normal text-slate-400">({hint})</span>}</label>{children}{error && <p className="mt-1.5 text-xs text-rose-600">{error}</p>}</div>;
+function Field({ label, htmlFor, required, hint, error, children }: { label: string; htmlFor?: string; required?: boolean; hint?: string; error?: string; children: React.ReactNode }) {
+  return <div><label htmlFor={htmlFor} className="mb-2 block text-sm font-semibold text-[var(--ink)]">{label} {required && <span className="text-rose-600" aria-hidden="true">*</span>} {hint && <span className="font-normal text-[var(--muted)]">({hint})</span>}</label>{children}{error && <p id={htmlFor ? `${htmlFor}-error` : undefined} className="mt-1.5 text-xs text-rose-700">{error}</p>}</div>;
 }
 
 function Toggle({ label, description, checked, onChange }: { label: string; description: string; checked: boolean; onChange: (checked: boolean) => void }) {
   return (
-    <label className="flex min-h-16 cursor-pointer items-center justify-between gap-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-cyan-300">
+    <label className="flex min-h-16 cursor-pointer items-center justify-between gap-4 rounded-md border border-[var(--line)] bg-[var(--paper)] px-4 py-3 transition hover:border-[var(--green)]">
       <span>
-        <span className="block text-sm font-semibold text-slate-800">{label}</span>
-        <span className="mt-1 block text-xs text-slate-500">{description}</span>
+        <span className="block text-sm font-semibold text-[var(--ink)]">{label}</span>
+        <span className="mt-1 block text-xs text-[var(--muted)]">{description}</span>
       </span>
       <span className="relative shrink-0">
         <input type="checkbox" role="switch" checked={checked} onChange={(event) => onChange(event.target.checked)} className="peer sr-only" />
-        <span className="block h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-cyan-700 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-cyan-700" />
+        <span className="block h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-[var(--green)] peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--focus)]" />
         <span className="pointer-events-none absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition peer-checked:translate-x-5" />
       </span>
     </label>
